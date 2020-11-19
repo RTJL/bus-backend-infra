@@ -22,7 +22,7 @@ resource "aws_vpc" "this" {
 resource "aws_ssm_parameter" "vpc_id" {
   name = "/${var.project}/${var.env}/vpc/id"
   description = "VPC ID"
-  type = "SecureString"
+  type = "String"
   value = aws_vpc.this.id
 
   tags = {
@@ -42,6 +42,17 @@ resource "aws_subnet" "public" {
   }
 }
 
+resource "aws_ssm_parameter" "subnet__public_id" {
+  name = "/${var.project}/${var.env}/subnet/public/id"
+  description = "Public Subnet IDs"
+  type = "StringList"
+  value = join(",", aws_subnet.public.*.id)
+
+  tags = {
+    Name = "${var.project}-vpc-${var.env}"
+  }
+}
+
 resource "aws_subnet" "private" {
   count = length(var.private_subnets)
 
@@ -50,6 +61,17 @@ resource "aws_subnet" "private" {
   availability_zone       = element(concat(var.azs, [""]), count.index)
   tags = {
     Name = "${var.project}-private-${count.index}-${var.env}"
+  }
+}
+
+resource "aws_ssm_parameter" "subnet__private_id" {
+  name = "/${var.project}/${var.env}/subnet/private/id"
+  description = "Private Subnet IDs"
+  type = "StringList"
+  value = join(",", aws_subnet.private.*.id)
+
+  tags = {
+    Name = "${var.project}-vpc-${var.env}"
   }
 }
 
@@ -105,5 +127,16 @@ resource "aws_security_group" "default_public" {
 
   tags = {
     Name = "${var.project}_public_sg-${var.env}"
+  }
+}
+
+resource "aws_ssm_parameter" "security_group_id" {
+  name = "/${var.project}/${var.env}/securityGroup/id"
+  description = "Security Group IDs"
+  type = "StringList"
+  value = join(",", [aws_security_group.default_public.id])
+
+  tags = {
+    Name = "${var.project}-vpc-${var.env}"
   }
 }
