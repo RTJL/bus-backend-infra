@@ -19,6 +19,17 @@ resource "aws_vpc" "this" {
   }
 }
 
+resource "aws_ssm_parameter" "vpc_id" {
+  name = "/${var.project}/${var.env}/vpc/id"
+  description = "VPC ID"
+  type = "SecureString"
+  value = aws_vpc.this.id
+
+  tags = {
+    Name = "${var.project}-vpc-${var.env}"
+  }
+}
+
 resource "aws_subnet" "public" {
   count = length(var.public_subnets)
 
