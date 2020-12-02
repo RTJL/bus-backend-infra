@@ -13,7 +13,7 @@ terraform {
 locals {
   website_bucket_name = "bus-frontend-app-${var.env}"
   website_endpoint = trimprefix(aws_s3_bucket.website_bucket.website_endpoint, "https://")
-  api_origin_path = "/dev"
+  api_origin_path = "/${var.env}"
   api_origin_without_http = trimprefix(data.aws_ssm_parameter.api_gateway_endpoint.value, "https://")
   api_gateway_domain_name = trimsuffix(local.api_origin_without_http, local.api_origin_path)
 }
