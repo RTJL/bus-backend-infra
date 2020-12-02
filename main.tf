@@ -66,6 +66,7 @@ resource "aws_cloudfront_distribution" "website_distribution" {
 
   enabled = true
   default_root_object = "index.html"
+  price_class = "PriceClass_200"
 
   default_cache_behavior {
     viewer_protocol_policy = "redirect-to-https"
