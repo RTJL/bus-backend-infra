@@ -26,3 +26,16 @@ variable "azs" {
   description = "List of availability zones names in the region"
   type        = list(string)
 }
+variable "repository_name" {
+  description = "Respository Name"
+  default = "bus-frontend-app"
+}
+variable "www_domain_name" {
+  description = "Website domain name"
+  type = string
+}
+variable "www_root_domain_name" {
+  description = "Website root domain name"
+  type = string
+  default = "sgbus.tk"
+}
