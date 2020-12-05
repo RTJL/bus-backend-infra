@@ -103,6 +103,110 @@ resource "aws_route_table_association" "main_private" {
   route_table_id = aws_route_table.main_private.id
 }
 
+resource "aws_ecs_cluster" "main" {
+  name = var.project
+}
+
+resource "aws_ecs_task_definition" "main" {
+  family = var.project
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  container_definitions = jsonencode([{
+   name        = "grafana"
+   image       = "grafana/grafana:7.3.0"
+   essential   = true
+   portMappings = [{
+     protocol      = "tcp"
+     containerPort = 3000
+     hostPort      = 3000
+   }]
+  }])
+}
+
+resource "aws_iam_role" "ecs_task_role" {
+  name = "${var.project}-ecsTaskRole"
+ 
+  assume_role_policy = <<EOF
+{
+ "Version": "2012-10-17",
+ "Statement": [
+   {
+     "Action": "sts:AssumeRole",
+     "Principal": {
+       "Service": "ecs-tasks.amazonaws.com"
+     },
+     "Effect": "Allow",
+     "Sid": ""
+   }
+ ]
+}
+EOF
+}
+
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "${var.project}-ecsTaskExecutionRole"
+ 
+  assume_role_policy = <<EOF
+{
+ "Version": "2012-10-17",
+ "Statement": [
+   {
+     "Action": "sts:AssumeRole",
+     "Principal": {
+       "Service": "ecs-tasks.amazonaws.com"
+     },
+     "Effect": "Allow",
+     "Sid": ""
+   }
+ ]
+}
+EOF
+}
+
+resource "aws_ecs_service" "main" {
+ name                               = "${var.project}-service-${var.env}"
+ cluster                            = aws_ecs_cluster.main.id
+ task_definition                    = aws_ecs_task_definition.main.arn
+ desired_count                      = 1
+ deployment_minimum_healthy_percent = 0
+ deployment_maximum_percent         = 200
+ launch_type                        = "FARGATE"
+ scheduling_strategy                = "REPLICA"
+ 
+ network_configuration {
+   security_groups  = [aws_security_group.ecs_tasks.id]
+   subnets          = aws_subnet.public.*.id
+   assign_public_ip = true
+ }
+ 
+ lifecycle {
+   ignore_changes = [task_definition, desired_count]
+ }
+}
+
+resource "aws_security_group" "ecs_tasks" {
+  name   = "${var.project}-sg-task-${var.env}"
+  vpc_id = aws_vpc.main.id
+ 
+  ingress {
+   protocol         = "tcp"
+   from_port        = 3000
+   to_port          = 3000
+   cidr_blocks      = ["0.0.0.0/0"]
+  }
+ 
+  egress {
+   protocol         = "-1"
+   from_port        = 0
+   to_port          = 0
+   cidr_blocks      = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_s3_bucket" "website_bucket" {
   bucket = local.website_bucket_name
   acl = "public-read"
