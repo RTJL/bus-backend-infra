@@ -39,3 +39,33 @@ variable "www_root_domain_name" {
   type = string
   default = "sgbus.tk"
 }
+variable "instance_type" {
+  description = "EC2 instance type"
+  type = string
+  default = "t2.micro"
+}
+variable "ami" {
+  description = "EC2 AMI"
+  type = string
+  default = "ami-0d728fd4e52be968f"
+}
+variable "key_pair_name" {
+  description = "EC2 Keypair"
+  type = string
+}
+variable "ssh_ingress_protocol" {
+  description = "SSH security group ingress protcol"
+  type = string
+}
+variable "ssh_ingress_cidr" {
+  description = "SSH security group ingress cidr"
+  type = string
+}
+variable "ssh_egress_cidr" {
+  description = "SSH security group egress cidr"
+  type = string
+}
+variable "ssh_egress_protocol" {
+  description = "SSH security group egress protcol"
+  type = string
+}

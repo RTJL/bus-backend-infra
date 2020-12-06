@@ -218,6 +218,64 @@ resource "aws_route53_record" "www" {
   }
 }
 
+resource "aws_instance" "public" {
+  ami           = data.aws_ssm_parameter.public_ec2_ami.value
+  instance_type = var.instance_type
+
+  subnet_id = aws_subnet.public[0].id
+  vpc_security_group_ids = [aws_security_group.allow-ssh.id, aws_security_group.allow-http.id]
+  key_name = aws_key_pair.key_pair.key_name
+}
+
+resource "aws_key_pair" "key_pair" {
+  key_name   = var.key_pair_name
+  public_key = file("keys/${var.key_pair_name}.pub")
+}
+
+resource "aws_security_group" "allow-ssh" {
+  vpc_id      = aws_vpc.main.id
+  name        = "allow-ssh"
+  description = "security group that allows ssh and all egress traffic"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = var.ssh_egress_protocol
+    cidr_blocks = [var.ssh_egress_cidr]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = var.ssh_ingress_protocol
+    cidr_blocks = [var.ssh_ingress_cidr]
+  }
+  tags = {
+    Name = "allow-ssh"
+  }
+}
+
+resource "aws_security_group" "allow-http" {
+  vpc_id      = aws_vpc.main.id
+  name        = "allow-http"
+  description = "security group that allows ssh and all egress traffic"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = var.ssh_egress_protocol
+    cidr_blocks = [var.ssh_egress_cidr]
+  }
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = var.ssh_ingress_protocol
+    cidr_blocks = [var.ssh_ingress_cidr]
+  }
+  tags = {
+    Name = "allow-http"
+  }
+}
+
 data "aws_iam_policy_document" "website_policy" {
   statement {
     actions = [
@@ -245,5 +303,10 @@ data "aws_ssm_parameter" "api_gateway_endpoint" {
 
 data "aws_ssm_parameter" "host_zone_id" {
   name = "/bus-backend-infra/${var.env}/route53/hostZoneId"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "public_ec2_ami" {
+  name = "/bus-backend-infra/${var.env}/ec2/public_ami"
   with_decryption = true
 }

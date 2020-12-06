@@ -1,0 +1,33 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "ap-southeast-1",
+    "source_ami": "ami-0d728fd4e52be968f",
+    "instance_type": "t2.micro",
+    "ssh_username": "ec2-user",
+    "ami_name": "sgbus-backend-infra public-ec2 {{timestamp}}"
+  }],
+  "provisioners": [{
+    "type": "shell",
+    "scripts": [  "scripts/install_software.sh"   ],
+    "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "pause_before": "30s",
+    "expect_disconnect": true
+  },{
+    "type": "shell",
+    "scripts": [  "scripts/start_services.sh"   ],
+    "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "pause_before": "10s"
+  },{
+    "type": "shell",
+    "scripts": [  "scripts/start_containers.sh"   ],
+    "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}' & sleep 5",
+    "pause_before": "10s"
+  }]
+}
