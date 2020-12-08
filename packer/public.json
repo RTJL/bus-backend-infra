@@ -8,26 +8,18 @@
     "access_key": "{{user `aws_access_key`}}",
     "secret_key": "{{user `aws_secret_key`}}",
     "region": "ap-southeast-1",
-    "source_ami": "ami-0d728fd4e52be968f",
+    "source_ami": "ami-06fb5332e8e3e577a",
     "instance_type": "t2.micro",
-    "ssh_username": "ec2-user",
+    "ssh_username": "ubuntu",
     "ami_name": "sgbus-backend-infra public-ec2 {{timestamp}}"
   }],
   "provisioners": [{
     "type": "shell",
-    "scripts": [  "scripts/install_software.sh"   ],
+    "scripts": [  "scripts/install_ansible.sh"   ],
     "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-    "pause_before": "30s",
-    "expect_disconnect": true
+    "pause_before": "30s"
   },{
-    "type": "shell",
-    "scripts": [  "scripts/start_services.sh"   ],
-    "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-    "pause_before": "10s"
-  },{
-    "type": "shell",
-    "scripts": [  "scripts/start_containers.sh"   ],
-    "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}' & sleep 5",
-    "pause_before": "10s"
+    "type": "ansible-local",
+    "playbook_file": "scripts/playbook.yml"
   }]
 }
