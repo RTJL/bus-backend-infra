@@ -1,2 +1,2 @@
-sudo systemctl enable docker
-sudo systemctl start docker
+#!/bin/bash
+sudo docker start grafana-server

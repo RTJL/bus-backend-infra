@@ -225,6 +225,7 @@ resource "aws_instance" "public" {
   subnet_id = aws_subnet.public[0].id
   vpc_security_group_ids = [aws_security_group.allow-ssh.id, aws_security_group.allow-http.id]
   key_name = aws_key_pair.key_pair.key_name
+  user_data = file("packer/scripts/start_services.sh")
 }
 
 resource "aws_key_pair" "key_pair" {
