@@ -12,3 +12,8 @@ output "public_host_ip" {
   description = "Public EC2 host IP"
   value = aws_instance.public.public_ip
 }
+
+output "public_host_dns" {
+  description = "Public EC2 host DNS"
+  value = aws_instance.public.public_dns
+}
