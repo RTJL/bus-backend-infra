@@ -113,6 +113,50 @@ resource "aws_s3_bucket" "website_bucket" {
   }
 }
 
+resource "aws_ssm_parameter" "vpc_id" {
+  name = "/${var.project}/${var.env}/vpc/id"
+  description = "VPC ID"
+  type = "String"
+  value = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project}-${var.env}"
+  }
+}
+
+resource "aws_ssm_parameter" "subnet__public_id" {
+   name = "/${var.project}/${var.env}/subnet/public/ids"
+   description = "Public Subnet IDs"
+   type = "StringList"
+   value = join(",", aws_subnet.public.*.id)
+
+    tags = {
+     Name = "${var.project}-${var.env}"
+   }
+}
+
+resource "aws_ssm_parameter" "subnet__private_id" {
+  name = "/${var.project}/${var.env}/subnet/private/ids"
+  description = "Private Subnet IDs"
+  type = "StringList"
+  value = join(",", aws_subnet.private.*.id)
+
+  tags = {
+    Name = "${var.project}-${var.env}"
+  }
+}
+
+resource "aws_ssm_parameter" "security_group_id" {
+  name = "/${var.project}/${var.env}/securityGroup/ids"
+  description = "Security Group IDs"
+  type = "StringList"
+  value = join(",", [aws_security_group.allow-ssh.id, aws_security_group.allow-http.id])
+
+  tags = {
+    Name = "${var.project}-${var.env}"
+  }
+}
+
 resource "aws_ssm_parameter" "website_bucket_name" {
   name = "/${var.project}/${var.env}/s3/website_bucket_name"
   description = "Website Bucket Name"
@@ -218,6 +262,14 @@ resource "aws_route53_record" "www" {
   }
 }
 
+resource "aws_route53_record" "monitoring" {
+  zone_id = data.aws_ssm_parameter.host_zone_id.value
+  name    = var.www_monitoring_domain_name
+  type    = "A"
+  ttl     = "300"
+  records = [aws_instance.public.public_ip]
+}
+
 resource "aws_instance" "public" {
   ami           = data.aws_ssm_parameter.public_ec2_ami.value
   instance_type = var.instance_type
@@ -275,6 +327,35 @@ resource "aws_security_group" "allow-http" {
   tags = {
     Name = "allow-http"
   }
+}
+
+resource "aws_elasticache_cluster" "redis" {
+  cluster_id = "${var.project}-${var.env}-cache"
+  engine = "redis"
+  node_type = "cache.t2.micro"
+  num_cache_nodes = 1
+  parameter_group_name = "default.redis6.x"
+  subnet_group_name = aws_elasticache_subnet_group.redis_subnet_group.name
+
+  tags = {
+    Name = "${var.project}-${var.env}"
+  }
+}
+
+resource "aws_ssm_parameter" "elasticache_endpoint" {
+  name = "/${var.project}/${var.env}/elasticache/endpoint"
+  description = "Elasticache Endpoint"
+  type = "SecureString"
+  value = "${aws_elasticache_cluster.redis.cache_nodes.0.address}:${aws_elasticache_cluster.redis.cache_nodes.0.port}"
+
+  tags = {
+    Name = "${var.project}-${var.env}"
+  }
+}
+
+resource "aws_elasticache_subnet_group" "redis_subnet_group" {
+  name       = "${var.project}-${var.env}-redis-subnet"
+  subnet_ids = aws_subnet.private.*.id
 }
 
 data "aws_iam_policy_document" "website_policy" {

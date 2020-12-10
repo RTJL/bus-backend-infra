@@ -39,6 +39,10 @@ variable "www_root_domain_name" {
   type = string
   default = "sgbus.tk"
 }
+variable "www_monitoring_domain_name" {
+  description = "Monitoring domain name"
+  type = string
+}
 variable "instance_type" {
   description = "EC2 instance type"
   type = string
