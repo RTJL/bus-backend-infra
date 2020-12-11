@@ -150,7 +150,7 @@ resource "aws_ssm_parameter" "security_group_id" {
   name = "/${var.project}/${var.env}/securityGroup/ids"
   description = "Security Group IDs"
   type = "StringList"
-  value = join(",", [aws_security_group.allow-ssh.id, aws_security_group.allow-http.id])
+  value = join(",", [aws_security_group.allow-ssh.id, aws_security_group.allow-http.id, aws_security_group.allow-redis.id])
 
   tags = {
     Name = "${var.project}-${var.env}"
@@ -329,6 +329,28 @@ resource "aws_security_group" "allow-http" {
   }
 }
 
+resource "aws_security_group" "allow-redis" {
+  vpc_id      = aws_vpc.main.id
+  name        = "allow-redis"
+  description = "security group that allows redis and all egress traffic"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = var.ssh_egress_protocol
+    cidr_blocks = [var.ssh_egress_cidr]
+  }
+
+  ingress {
+    from_port   = 6379
+    to_port     = 6379
+    protocol    = var.ssh_ingress_protocol
+    cidr_blocks = [var.ssh_ingress_cidr]
+  }
+  tags = {
+    Name = "allow-redis"
+  }
+}
+
 resource "aws_elasticache_cluster" "redis" {
   cluster_id = "${var.project}-${var.env}-cache"
   engine = "redis"
@@ -336,6 +358,7 @@ resource "aws_elasticache_cluster" "redis" {
   num_cache_nodes = 1
   parameter_group_name = "default.redis6.x"
   subnet_group_name = aws_elasticache_subnet_group.redis_subnet_group.name
+  security_group_ids = [aws_security_group.allow-redis.id]
 
   tags = {
     Name = "${var.project}-${var.env}"
@@ -345,8 +368,8 @@ resource "aws_elasticache_cluster" "redis" {
 resource "aws_ssm_parameter" "elasticache_endpoint" {
   name = "/${var.project}/${var.env}/elasticache/endpoint"
   description = "Elasticache Endpoint"
-  type = "SecureString"
-  value = "${aws_elasticache_cluster.redis.cache_nodes.0.address}:${aws_elasticache_cluster.redis.cache_nodes.0.port}"
+  type = "String"
+  value = aws_elasticache_cluster.redis.cache_nodes.0.address
 
   tags = {
     Name = "${var.project}-${var.env}"
