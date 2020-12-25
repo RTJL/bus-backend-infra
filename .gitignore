@@ -34,3 +34,7 @@ override.tf.json
 terraform.rc
 
 .DS_STORE
+
+/modules/ec2/keys/*
+.pem
+.pub
