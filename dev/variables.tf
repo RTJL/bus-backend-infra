@@ -30,8 +30,6 @@ variable "sg_map" {
   description = "Map of security group name to config"
   type        = map
 }
-
-
 variable "repository_name" {
   description = "Respository Name"
   default     = "bus-frontend-app"
@@ -52,4 +50,13 @@ variable "www_monitoring_domain_name" {
 variable "key_pair_name" {
   description = "EC2 Keypair"
   type        = string
+}
+variable "nat_instance_ami" {
+  description = "NAT Instance AMI ID"
+  type        = string
+}
+variable "nat_instance_type" {
+  description = "NAT instance type"
+  type        = string
+  default     = "t2.micro"
 }

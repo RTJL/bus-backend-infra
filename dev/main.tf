@@ -58,6 +58,10 @@ module "vpc" {
   private_subnets = var.private_subnets
   vpc_name        = "${var.project}-${var.env}"
   azs             = var.azs
+  key_pair_name = var.key_pair_name
+  nat_ami = var.nat_instance_ami
+  instance_type = var.nat_instance_type
+  sg_ids = []
 }
 
 module "website_bucket" {
